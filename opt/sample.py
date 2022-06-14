@@ -1,30 +1,41 @@
-import mysql.connector
+import mysql.connector as mydb
 
-cnx = None
+# コネクションの作成
+conn = mydb.connect(
+    host='mysql',
+    port='3306',
+    user='root',
+    password='root',
+    database='test_database'
+)
 
-try:
-    cnx = mysql.connector.connect(
-        user='root',  # ユーザー名
-        password='root',  # パスワード
-        host='mysql',  # ホスト名(IPアドレス）
-        database='test_database', #データベース
-        port='3306' #ポート番号
-    )
 
-    if cnx.is_connected:
-        print("Connected!")
+# コネクションが切れた時に再接続してくれるよう設定
+conn.ping(reconnect=True)
 
-except mysql.connector.Error as e:
-    if e.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print("User name or password is invalid.")
-    elif e.errno == errorcode.ER_ACCOUNT_HAS_BEEN_LOCKED:
-        print("This account is locked.")
-    else:
-        print(e)
+# 接続できているかどうか確認
+print(conn.is_connected())
 
-except Exception as e:
-    print(f"Error Occurred: {e}")
+# DB操作用にカーソルを作成
+cur = conn.cursor()
 
-finally:
-    if cnx is not None and cnx.is_connected():
-        cnx.close()
+sql = ('''
+INSERT INTO article 
+    (name, age)
+VALUES 
+    (%s, %s)
+''')
+
+data = [
+    ('加藤', 23),
+    ('榊', 42),
+    ('小室', 32)
+]
+
+cur.executemany(sql, data)
+conn.commit()
+print(f"{cur.rowcount} records inserted.")
+
+# DB操作が終わったらカーソルとコネクションを閉じる
+cur.close()
+conn.close()
